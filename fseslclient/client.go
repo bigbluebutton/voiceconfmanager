@@ -3,6 +3,7 @@ package fseslclient
 import (
 	"errors"
 	"strconv"
+	"fmt"
 	"regexp"
 	"github.com/fiorix/go-eventsocket/eventsocket"
 )
@@ -58,14 +59,23 @@ func getRecordFilenameFromEvent(e *eventsocket.Event) string {
 	return e.Get("Path")
 }
 
-func isUserMuted(e *eventsocket.Event) bool {
-	speak, err := strconv.ParseBool(e.Get("Speak"))
+func getSpeakFromEvent(e *eventsocket.Event) string {
+	return e.Get("Speak")
+}
+
+func isUserMuted(s string) bool {
+	speak, err := strconv.ParseBool(s)
 	muted := false
 	if err != nil {
+		fmt.Printf("Error parsing bool %s\n", err)
+		return false
+	} else {
 		if speak {
 			muted = false
+			fmt.Printf("speak %s\n", speak)
 		} else {
 			muted = true
+			fmt.Printf("speak %s\n", speak)
 		}
 	}
 	
@@ -122,7 +132,8 @@ func handleUseJoinedEvent(e *eventsocket.Event) VoiceUserJoinedEvent {
 	memberId := getMemberIdFromEvent(e)
     callerIdNum := getCallerIdNumFromEvent(e)
     callerIdName := getCallerIdNameFromEvent(e)
-	muted := isUserMuted(e)
+	speak := getSpeakFromEvent(e)
+	muted := isUserMuted(speak)
 	talking := isUserTalking(e)
 	confName := e.Get("Conference-Name")
 //	confSize := e.Get("Conference-Size")
