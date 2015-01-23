@@ -2,46 +2,11 @@ package fseslclient
 
 import (
 	"errors"
-	"strconv"
 	"fmt"
-	"regexp"
 	"github.com/fiorix/go-eventsocket/eventsocket"
+	"regexp"
+	"strconv"
 )
-
-type VoiceUserJoinedEvent struct {
-	ConferenceId string
-	VoiceUserId  string
-	CallerIdNum  string
-	CallerIdName string
-	Muted        bool
-	Talking      bool
-	Locked       bool
-	UserId       string
-}
-
-type VoiceUserLeftEvent struct {
-	ConferenceId string
-	VoiceUserId  string
-}
-
-type VoiceUserMutedEvent struct {
-	ConferenceId string
-	VoiceUserId  string
-	Muted        bool
-}
-
-type VoiceUserTalkingEvent struct {
-	ConferenceId string
-	VoiceUserId  string
-	Talking      bool
-}
-
-type VoiceStartRecordingEvent struct {
-	ConferenceId string
-	Timestamp    string
-	Filename     string
-	Recording    bool
-}
 
 func getMemberIdFromEvent(e *eventsocket.Event) string {
 	return e.Get("Member-ID")
@@ -78,12 +43,12 @@ func isUserMuted(s string) bool {
 			fmt.Printf("speak %s\n", speak)
 		}
 	}
-	
+
 	return muted
 }
 
 func isUserTalking(e *eventsocket.Event) bool {
-    talk, err := strconv.ParseBool(e.Get("Talking"))
+	talk, err := strconv.ParseBool(e.Get("Talking"))
 	talking := false
 	if err != nil {
 		if talk {
@@ -92,8 +57,8 @@ func isUserTalking(e *eventsocket.Event) bool {
 			talking = true
 		}
 	}
-	
-	return talking	
+
+	return talking
 }
 
 func isUserJoinedThoughGlobalAudio(s string) bool {
@@ -110,7 +75,6 @@ type UserType struct {
 	UserId   string
 	Username string
 }
-
 
 func getUser(s string) (UserType, error) {
 	re := regexp.MustCompile("(?P<userid>.*)-bbbID-(?P<username>.*)$")
@@ -130,37 +94,34 @@ func getUser(s string) (UserType, error) {
 
 func handleUseJoinedEvent(e *eventsocket.Event) VoiceUserJoinedEvent {
 	memberId := getMemberIdFromEvent(e)
-    callerIdNum := getCallerIdNumFromEvent(e)
-    callerIdName := getCallerIdNameFromEvent(e)
+	callerIdNum := getCallerIdNumFromEvent(e)
+	callerIdName := getCallerIdNameFromEvent(e)
 	speak := getSpeakFromEvent(e)
 	muted := isUserMuted(speak)
 	talking := isUserTalking(e)
 	confName := e.Get("Conference-Name")
-//	confSize := e.Get("Conference-Size")
-			
- //   voiceUserId := callerIdName
+	//	confSize := e.Get("Conference-Size")
+
+	//   voiceUserId := callerIdName
 	globalAudio := isUserJoinedThoughGlobalAudio(callerIdName)
-	
+
 	voiceUser := VoiceUserJoinedEvent{}
-	
+
 	if globalAudio != true {
 		user, err := getUser(callerIdName)
 		if err != nil {
 			voiceUser := VoiceUserJoinedEvent{}
 			voiceUser.ConferenceId = confName
-			voiceUser.VoiceUserId  = user.UserId
-			voiceUser.CallerIdNum  = callerIdNum
+			voiceUser.VoiceUserId = user.UserId
+			voiceUser.CallerIdNum = callerIdNum
 			voiceUser.CallerIdName = user.Username
-			voiceUser.Muted        = muted
-			voiceUser.Talking      = talking
-			voiceUser.Locked       = false
-			voiceUser.UserId       = memberId
+			voiceUser.Muted = muted
+			voiceUser.Talking = talking
+			voiceUser.Locked = false
+			voiceUser.UserId = memberId
 
 		}
-	
-	}	
+
+	}
 	return voiceUser
 }
-
-
-
